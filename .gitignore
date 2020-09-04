@@ -1,0 +1,12 @@
+*.~
+*.iml
+logFile.*
+target/
+build/
+allure-results/
+.idea/
+surefire/
+/.idea
+/ExtentReports
+/.allure
+local.properties

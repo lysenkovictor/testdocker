@@ -1,0 +1,46 @@
+version: '3.7'
+
+services:
+  db:
+    image: mysql
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./app/database/databaseschema.sql:/docker-entrypoint-initdb.d/databaseschema.sql:ro
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456789
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  warehouse:
+    build: ./app/server/
+    stdin_open: true
+    tty: true
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db/service?serverTimezone=EST5EDT
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123456789
+
+  tests:
+    image: maven:3-jdk-14
+    tty: true
+    working_dir: /usr/src/mymaven
+    volumes:
+      - $PWD:/usr/src/mymaven
+      - ~/.m2:/var/maven/.m2
+    environment:
+      - url.baseUrl=http://warehouse:8080
+      - MAVEN_CONFIG=/var/maven/.m2
+    depends_on:
+      - warehouse
+    command: mvn test -Duser.home=/var/maven
+    user: ${CURRENT_UID}
+volumes:
+  db-data:
